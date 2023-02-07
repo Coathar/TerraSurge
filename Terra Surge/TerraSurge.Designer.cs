@@ -28,30 +28,25 @@
         /// </summary>
         private void InitializeComponent()
         {
-            ApplicationComboBox = new ComboBox();
             ConfigurationLbl = new Label();
-            label1 = new Label();
+            ApplicationLabel = new Label();
             DebugRecreateDB = new Button();
             DebugRunLoaders = new Button();
             StartStopBtn = new Button();
             PreviewPictureBox = new PictureBox();
             NetworkDeviceComboBox = new ComboBox();
-            label2 = new Label();
+            NetworkDeviceLabel = new Label();
             label3 = new Label();
             label4 = new Label();
             CurrentPlayerDisplayLbl = new Label();
-            button1 = new Button();
+            SerialDeviceLabel = new Label();
+            SerialDeviceComboBox = new ComboBox();
+            ProcessingPreviewPictureBox = new PictureBox();
+            label1 = new Label();
+            RTMPFeedTextBox = new TextBox();
             ((System.ComponentModel.ISupportInitialize)PreviewPictureBox).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)ProcessingPreviewPictureBox).BeginInit();
             SuspendLayout();
-            // 
-            // ApplicationComboBox
-            // 
-            ApplicationComboBox.FormattingEnabled = true;
-            ApplicationComboBox.Location = new Point(145, 61);
-            ApplicationComboBox.Name = "ApplicationComboBox";
-            ApplicationComboBox.Size = new Size(183, 23);
-            ApplicationComboBox.TabIndex = 0;
-            ApplicationComboBox.DropDown += ApplicationComboBox_DropDown;
             // 
             // ConfigurationLbl
             // 
@@ -63,16 +58,16 @@
             ConfigurationLbl.TabIndex = 1;
             ConfigurationLbl.Text = "Configuration";
             // 
-            // label1
+            // ApplicationLabel
             // 
-            label1.AutoSize = true;
-            label1.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            label1.Location = new Point(31, 64);
-            label1.Name = "label1";
-            label1.Size = new Size(105, 15);
-            label1.TabIndex = 2;
-            label1.Text = "Select Application:";
-            label1.TextAlign = ContentAlignment.MiddleRight;
+            ApplicationLabel.AutoSize = true;
+            ApplicationLabel.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            ApplicationLabel.Location = new Point(51, 64);
+            ApplicationLabel.Name = "ApplicationLabel";
+            ApplicationLabel.Size = new Size(68, 15);
+            ApplicationLabel.TabIndex = 2;
+            ApplicationLabel.Text = "RTMP Feed:";
+            ApplicationLabel.TextAlign = ContentAlignment.MiddleRight;
             // 
             // DebugRecreateDB
             // 
@@ -122,26 +117,26 @@
             NetworkDeviceComboBox.TabIndex = 7;
             NetworkDeviceComboBox.DropDown += NetworkDeviceComboBox_DropDown;
             // 
-            // label2
+            // NetworkDeviceLabel
             // 
-            label2.AutoSize = true;
-            label2.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            label2.Location = new Point(9, 93);
-            label2.Name = "label2";
-            label2.Size = new Size(127, 15);
-            label2.TabIndex = 8;
-            label2.Text = "Select Network Device:";
-            label2.TextAlign = ContentAlignment.MiddleRight;
+            NetworkDeviceLabel.AutoSize = true;
+            NetworkDeviceLabel.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            NetworkDeviceLabel.Location = new Point(9, 93);
+            NetworkDeviceLabel.Name = "NetworkDeviceLabel";
+            NetworkDeviceLabel.Size = new Size(127, 15);
+            NetworkDeviceLabel.TabIndex = 8;
+            NetworkDeviceLabel.Text = "Select Network Device:";
+            NetworkDeviceLabel.TextAlign = ContentAlignment.MiddleRight;
             // 
             // label3
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            label3.Location = new Point(706, 24);
+            label3.Location = new Point(662, 24);
             label3.Name = "label3";
-            label3.Size = new Size(65, 21);
+            label3.Size = new Size(124, 21);
             label3.TabIndex = 9;
-            label3.Text = "Preview";
+            label3.Text = "Capture Preview";
             // 
             // label4
             // 
@@ -161,56 +156,99 @@
             CurrentPlayerDisplayLbl.TabIndex = 11;
             CurrentPlayerDisplayLbl.Text = "None";
             // 
-            // button1
+            // SerialDeviceLabel
             // 
-            button1.Location = new Point(125, 252);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 12;
-            button1.Text = "button1";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            SerialDeviceLabel.AutoSize = true;
+            SerialDeviceLabel.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            SerialDeviceLabel.Location = new Point(26, 122);
+            SerialDeviceLabel.Name = "SerialDeviceLabel";
+            SerialDeviceLabel.Size = new Size(110, 15);
+            SerialDeviceLabel.TabIndex = 14;
+            SerialDeviceLabel.Text = "Select Serial Device:";
+            SerialDeviceLabel.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // SerialDeviceComboBox
+            // 
+            SerialDeviceComboBox.FormattingEnabled = true;
+            SerialDeviceComboBox.Location = new Point(145, 119);
+            SerialDeviceComboBox.Name = "SerialDeviceComboBox";
+            SerialDeviceComboBox.Size = new Size(183, 23);
+            SerialDeviceComboBox.TabIndex = 13;
+            SerialDeviceComboBox.DropDown += SerialDeviceComboBox_DropDown;
+            // 
+            // ProcessingPreviewPictureBox
+            // 
+            ProcessingPreviewPictureBox.Location = new Point(1010, 48);
+            ProcessingPreviewPictureBox.Name = "ProcessingPreviewPictureBox";
+            ProcessingPreviewPictureBox.Size = new Size(542, 345);
+            ProcessingPreviewPictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
+            ProcessingPreviewPictureBox.TabIndex = 15;
+            ProcessingPreviewPictureBox.TabStop = false;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            label1.Location = new Point(1235, 24);
+            label1.Name = "label1";
+            label1.Size = new Size(144, 21);
+            label1.TabIndex = 16;
+            label1.Text = "Processing Preview";
+            // 
+            // RTMPFeedTextBox
+            // 
+            RTMPFeedTextBox.Location = new Point(145, 61);
+            RTMPFeedTextBox.Name = "RTMPFeedTextBox";
+            RTMPFeedTextBox.Size = new Size(183, 23);
+            RTMPFeedTextBox.TabIndex = 17;
+            RTMPFeedTextBox.Text = "rtmp://127.0.0.1/live";
             // 
             // TerraSurge
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1025, 634);
-            Controls.Add(button1);
+            ClientSize = new Size(1644, 641);
+            Controls.Add(RTMPFeedTextBox);
+            Controls.Add(label1);
+            Controls.Add(ProcessingPreviewPictureBox);
+            Controls.Add(SerialDeviceLabel);
+            Controls.Add(SerialDeviceComboBox);
             Controls.Add(CurrentPlayerDisplayLbl);
             Controls.Add(label4);
             Controls.Add(label3);
-            Controls.Add(label2);
+            Controls.Add(NetworkDeviceLabel);
             Controls.Add(NetworkDeviceComboBox);
             Controls.Add(PreviewPictureBox);
             Controls.Add(StartStopBtn);
             Controls.Add(DebugRunLoaders);
             Controls.Add(DebugRecreateDB);
-            Controls.Add(label1);
+            Controls.Add(ApplicationLabel);
             Controls.Add(ConfigurationLbl);
-            Controls.Add(ApplicationComboBox);
             Name = "TerraSurge";
             Text = "Terra Surge";
             Load += TerraSurge_Load;
             ((System.ComponentModel.ISupportInitialize)PreviewPictureBox).EndInit();
+            ((System.ComponentModel.ISupportInitialize)ProcessingPreviewPictureBox).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
-
-        private ComboBox ApplicationComboBox;
         private Label ConfigurationLbl;
-        private Label label1;
+        private Label ApplicationLabel;
         private Button DebugRecreateDB;
         private Button DebugRunLoaders;
         private Button StartStopBtn;
         private PictureBox PreviewPictureBox;
         private ComboBox NetworkDeviceComboBox;
-        private Label label2;
+        private Label NetworkDeviceLabel;
         private Label label3;
         private Label label4;
         private Label CurrentPlayerDisplayLbl;
-        private Button button1;
+        private Label SerialDeviceLabel;
+        private ComboBox SerialDeviceComboBox;
+        private PictureBox ProcessingPreviewPictureBox;
+        private Label label1;
+        private TextBox RTMPFeedTextBox;
     }
 }

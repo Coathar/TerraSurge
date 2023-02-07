@@ -1,0 +1,41 @@
+﻿namespace TerraSurgeShared.Enums
+{
+    public enum Hero
+    {
+        Ana,
+        Ashe,
+        Baptiste,
+        Bastion,
+        Brigitte,
+        Cassidy,
+        Dva,
+        Doomfist,
+        Echo,
+        Genji,
+        Hanzo,
+        Junkerqueen,
+        Junkrat,
+        Kiriko,
+        Lucio,
+        Mei,
+        Mercy,
+        Moira,
+        Orisa,
+        Pharah,
+        Ramattra,
+        Reaper,
+        Roadhog,
+        Sigma,
+        Sojourn,
+        Soldier76,
+        Sombra,
+        Symmetra,
+        Torbjorn,
+        Tracer,
+        Widowmaker,
+        Winston,
+        WreckingBall,
+        Zarya,
+        Zenyatta
+    }
+}

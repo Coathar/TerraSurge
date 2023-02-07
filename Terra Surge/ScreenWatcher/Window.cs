@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using TerraSurge.Enums;
-using TerraSurge.Util;
+using TerraSurge.Utilities;
 using TerraSurge.Extensions;
 
 namespace TerraSurge.ScreenWatcher

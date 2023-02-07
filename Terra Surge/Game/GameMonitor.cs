@@ -1,13 +1,11 @@
 ﻿using System.Collections.Concurrent;
-using System.Net;
-using System.Net.Sockets;
 using IronOcr;
-using IronSoftware.Drawing;
 using Newtonsoft.Json;
 using SharpDX.Text;
 using SharpPcap;
 using TerraSurgeShared.Models;
-using TerraSurge.Util;
+using TerraSurge.Utilities;
+using AForge.Imaging;
 
 namespace TerraSurge.Game
 {
@@ -21,7 +19,8 @@ namespace TerraSurge.Game
 
         private bool captureDeviceRunning;
         private BNetPlayer bnetPlayer;
-        private IronTesseract ocr = new IronTesseract();
+        private IGameState currentGameState;
+        private string currentMapName;
 
         private ConcurrentQueue<Bitmap> ImagesToProcess { get; set; }
 
@@ -30,12 +29,7 @@ namespace TerraSurge.Game
             TerraSurge = terraSurge;
             CaptureDevice = captureDevice;
             ImagesToProcess = new ConcurrentQueue<Bitmap>();
-            ocr.MultiThreaded = false;
-            ocr.Language = OcrLanguage.EnglishFast;
-
-            ocr.Configuration.ReadBarCodes = false;
-            ocr.Configuration.RenderSearchablePdfsAndHocr = false;
-            // ocr.Configuration.PageSegmentationMode = TesseractPageSegmentationMode.Auto;
+            currentGameState = GameStateFactory.CreateGameState(GameState.InMenu, this, TerraSurge);
         }
 
         public void Start()
@@ -62,22 +56,30 @@ namespace TerraSurge.Game
 
                 if (ImagesToProcess.TryDequeue(out Bitmap nextImage))
                 {
-                    Image cropped = Util.Util.CropImage(nextImage, new Rectangle(1300, 1150, 1000, 140));
-                    using (OcrInput input = new OcrInput())
-                    {
-                        input.Add(cropped);
-                        input.SelectTextColor(IronSoftware.Drawing.Color.White);
-                        OcrResult result = ocr.Read(input);
-                        result.SaveAsTextFile($"{i++}.txt");
-                    }
+                    TerraSurge.SetProcessingPreview((Bitmap)nextImage.Clone());
+                    currentGameState.ProcessImage(nextImage);
                     nextImage.Dispose();
-                    cropped.Dispose();
                 }
             }
 
             CaptureDevice.StopCapture();
         }
 
+        public void SetGameState(GameState gameState)
+        {
+            currentGameState = GameStateFactory.CreateGameState(gameState, this, TerraSurge);
+        }
+
+        public bool HasMapNameSet()
+        {
+            return !string.IsNullOrEmpty(currentMapName);
+        }
+
+        public void SetMapName(string mapName)
+        {
+            currentMapName = mapName;
+        }
+      
         private void TryCaptureLocalPlayerPacket()
         {
             CaptureDevice.OnPacketArrival += new PacketArrivalEventHandler(CaptureDevicePacketArrival);

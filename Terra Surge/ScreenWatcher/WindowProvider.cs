@@ -1,7 +1,7 @@
 ﻿using TerraSurge.Exceptions;
 using TerraSurge.Extensions;
 using TerraSurge.ScreenWatcher;
-using TerraSurge.Util;
+using TerraSurge.Utilities;
 
 namespace TerraSurge.ScreenWatcher
 {

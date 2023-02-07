@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using SharpDX.Direct3D11;
-using TerraSurge.Util;
+using TerraSurge.Utilities;
 
 namespace TerraSurge.ScreenWatcher
 {

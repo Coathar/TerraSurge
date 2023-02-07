@@ -1,7 +1,13 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO.Ports;
+using System.Runtime.InteropServices;
+using AForge.Video.DirectShow;
+using DirectShowLib;
 using IronOcr;
+using OpenCvSharp;
 using SharpPcap;
 using TerraSurge.Game;
 using TerraSurge.ScreenWatcher;
@@ -14,15 +20,18 @@ namespace TerraSurge
     {
         private bool ScreenWatcherRunning { get; set; } = false;
 
-        private ScreenWatcher.ScreenWatcher ActiveWatcher { get; set; }
+        private RTMPStreamManager WebcamManager { get; set; }
 
         public GameMonitor GameMonitor { get; set; }
+
+        public SRTServer SRTServer { get; set; }
 
         public CancellationTokenSource CTS { get; set; }
 
         public AppDbContext DBContext { get; set; }
+        public TemplateManager TemplateManager { get; set; }
 
-        private Dictionary<string, string> CachedProcesses { get; set; } = new Dictionary<string, string>();
+        private Dictionary<string, string> CachedCameras { get; set; } = new Dictionary<string, string>();
 
         private Dictionary<string, ICaptureDevice> CachedNetworkDevices { get; set; } = new Dictionary<string, ICaptureDevice>();
 
@@ -34,6 +43,8 @@ namespace TerraSurge
         private void TerraSurge_Load(object sender, EventArgs e)
         {
             DBContext = new AppDbContext();
+            TemplateManager = new TemplateManager();
+            TemplateManager.LoadTemplates();
         }
 
         private void DebugRunLoaders_Click(object sender, EventArgs e)
@@ -53,12 +64,10 @@ namespace TerraSurge
             {
                 CTS = new CancellationTokenSource();
 
-                Process[] foundProcesses = Process.GetProcessesByName(CachedProcesses[ApplicationComboBox.Text]);
-
-                if (foundProcesses.Length > 0)
+                if (!string.IsNullOrEmpty(RTMPFeedTextBox.Text)
                 {
-                    ActiveWatcher = new ScreenWatcher.ScreenWatcher(foundProcesses[0], this);
-                    ActiveWatcher.Start();
+                    WebcamManager = new WebcamManager(RTMPFeedTextBox.Text, this);
+                    WebcamManager.Start();
 
                     GameMonitor = new GameMonitor(this, CachedNetworkDevices[NetworkDeviceComboBox.Text]);
                     GameMonitor.Start();
@@ -79,65 +88,60 @@ namespace TerraSurge
             StartStopBtn.Text = ScreenWatcherRunning ? "Stop" : "Start";
         }
 
-        private void ApplicationComboBox_DropDown(object sender, EventArgs e)
+        private void CameraComboBox_DropDown(object sender, EventArgs e)
         {
-            ApplicationComboBox.Items.Clear();
-            CachedProcesses.Clear();
+            //Process[] processes = Process.GetProcesses();
 
-            List<string> toShow = new List<string>();
+            //foreach (Process p in processes)
+            //{
+            //    if (!string.IsNullOrEmpty(p.MainWindowTitle))
+            //    {
+            //        string fileName = string.Empty;
 
-            Process[] processes = Process.GetProcesses();
+            //        // Assemble file name and if it doesn't exist, skip this process.
+            //        try
+            //        {
+            //            fileName = $" - ({Path.GetFileName(p?.MainModule?.FileName)})";
+            //        }
+            //        catch (Win32Exception)
+            //        { }
 
-            foreach (Process p in processes)
-            {
-                if (!string.IsNullOrEmpty(p.MainWindowTitle))
-                {
-                    string fileName = string.Empty;
+            //        // Append window title with file name.
+            //        string displayName = $"{p.MainWindowTitle}{fileName}";
 
-                    // Assemble file name and if it doesn't exist, skip this process.
-                    try
-                    {
-                        fileName = $" - ({Path.GetFileName(p?.MainModule?.FileName)})";
-                    }
-                    catch (Win32Exception)
-                    { }
+            //        // Removes duplicate programs that are marked with a (1). Weird workaround, will need to redo later
+            //        if (CachedCameras.ContainsKey(displayName))
+            //        {
+            //            displayName += "(1)";
+            //        }
 
-                    // Append window title with file name.
-                    string displayName = $"{p.MainWindowTitle}{fileName}";
+            //        toShow.Add(displayName);
+            //        CachedCameras.Add(displayName, p.ProcessName);
+            //    }
+            //}
 
-                    // Removes duplicate programs that are marked with a (1). Weird workaround, will need to redo later
-                    if (CachedProcesses.ContainsKey(displayName))
-                    {
-                        displayName += "(1)";
-                    }
-
-                    toShow.Add(displayName);
-                    CachedProcesses.Add(displayName, p.ProcessName);
-                }
-            }
-
-            ApplicationComboBox.Items.Clear();
-            ApplicationComboBox.Items.AddRange(toShow.OrderBy(s => s).ToArray());
+            CameraComboBox.Items.Clear();
+            CameraComboBox.Items.AddRange(DsDevice.GetDevicesOfCat(DirectShowLib.FilterCategory.VideoInputDevice).Select(x => x.Name).ToArray());
 
             int maxWidth = 0, temp = 0;
 
-            foreach (var obj in ApplicationComboBox.Items)
+            foreach (var obj in CameraComboBox.Items)
             {
-                temp = TextRenderer.MeasureText(obj.ToString(), ApplicationComboBox.Font).Width;
+                temp = TextRenderer.MeasureText(obj.ToString(), CameraComboBox.Font).Width;
                 if (temp > maxWidth)
                 {
                     maxWidth = temp;
                 }
             }
 
-            ApplicationComboBox.DropDownWidth = maxWidth;
+            CameraComboBox.DropDownWidth = maxWidth;
         }
 
-        public void SetPreview(Bitmap bitmap)
+        public void SetCapturePreview(Bitmap bitmap)
         {
             if (PreviewPictureBox.InvokeRequired)
             {
-                PreviewPictureBox.Invoke(SetPreview, bitmap);
+                PreviewPictureBox.Invoke(SetCapturePreview, bitmap);
             }
             else
             {
@@ -145,6 +149,21 @@ namespace TerraSurge
                     PreviewPictureBox.Image.Dispose();
 
                 PreviewPictureBox.Image = bitmap;
+            }
+        }
+
+        public void SetProcessingPreview(Bitmap bitmap)
+        {
+            if (ProcessingPreviewPictureBox.InvokeRequired)
+            {
+                ProcessingPreviewPictureBox.Invoke(SetProcessingPreview, bitmap);
+            }
+            else
+            {
+                if (ProcessingPreviewPictureBox.Image != null)
+                    ProcessingPreviewPictureBox.Image.Dispose();
+
+                ProcessingPreviewPictureBox.Image = bitmap;
             }
         }
 
@@ -162,8 +181,6 @@ namespace TerraSurge
 
         private void NetworkDeviceComboBox_DropDown(object sender, EventArgs e)
         {
-            NetworkDeviceComboBox.Items.Clear();
-
             CaptureDeviceList networkDevices = CaptureDeviceList.Instance;
 
             if (networkDevices.Count == 0)
@@ -197,9 +214,43 @@ namespace TerraSurge
             NetworkDeviceComboBox.DropDownWidth = maxWidth;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void SerialDeviceComboBox_DropDown(object sender, EventArgs e)
         {
-            string testImage = "C:\\Users\\train\\Documents\\ShareX\\Screenshots\\2023-01\\Overwatch_8gX8sv7YWA.jpg";
+            SerialDeviceComboBox.Items.Clear();
+
+            string[] ports = SerialPort.GetPortNames();
+
+            if (ports.Length == 0)
+            {
+                MessageBox.Show(text: "No devices found");
+                return;
+            }
+
+            SerialDeviceComboBox.Items.AddRange(ports.OrderBy(s => s).ToArray());
+            int maxWidth = 0, temp = 0;
+
+            foreach (var obj in SerialDeviceComboBox.Items)
+            {
+                temp = TextRenderer.MeasureText(obj.ToString(), NetworkDeviceComboBox.Font).Width;
+                if (temp > maxWidth)
+                {
+                    maxWidth = temp;
+                }
+            }
+
+            SerialDeviceComboBox.DropDownWidth = maxWidth;
+        }
+
+        public string GetSerialPort()
+        {
+            string toReturn = string.Empty;
+
+            Invoke((MethodInvoker)delegate ()
+            {
+                toReturn = (string)SerialDeviceComboBox.SelectedItem;
+            });
+
+            return toReturn;
         }
     }
 }
